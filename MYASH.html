@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuokkaPokka · 2D World</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --peach:#E9A488; --peach-deep:#C8826B;
+  --blush:#F0C8C0; --cream:#FBE6CA; --sage:#B8D4C0; --sage-deep:#7B9F86;
+  --lavender:#C8C0E0; --slate:#A8B5C8; --cocoa:#5C4030; --ink:#3D3329;
+  --ease:cubic-bezier(0.25,0.1,0.25,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:linear-gradient(135deg,#F4D9C4 0%,#E8DAEC 50%,#D4DCEC 100%);
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px;
+  color:var(--cocoa);
+}
+.serif{font-family:'Fraunces',serif;}
+
+/* ============================================================
+   Phone frame mockup
+   ============================================================ */
+.phone-stage{position:relative;}
+.phone-frame{
+  width:390px;height:844px;border-radius:48px;
+  background:#1a1428;
+  box-shadow:0 30px 90px -20px rgba(0,0,0,.4),
+             0 10px 30px -10px rgba(0,0,0,.3),
+             inset 0 0 0 12px #2a2030,
+             inset 0 0 0 14px #0a0510;
+  position:relative;overflow:hidden;
+}
+.notch{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  width:120px;height:32px;background:#0a0510;border-radius:20px;z-index:60;
+}
+
+/* ============================================================
+   2D WORLD
+   ============================================================ */
+.world{
+  position:absolute;inset:14px;border-radius:38px;overflow:hidden;
+  background:#1a1428;
+}
+.world-bg{
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg,#3D2E58 0%,#5C4878 35%,#8B6FA8 65%,#C5A8B8 100%);
+}
+/* Stars */
+.world-bg .star{
+  position:absolute;width:2px;height:2px;border-radius:50%;
+  background:#fff;opacity:.7;
+  animation:star-twinkle 3s ease-in-out infinite;
+}
+.world-bg .star.bright{width:3px;height:3px;box-shadow:0 0 8px 2px rgba(255,255,255,.6);}
+@keyframes star-twinkle{
+  0%,100%{opacity:.5;}50%{opacity:1;}
+}
+/* Moon */
+.world-bg .moon{
+  position:absolute;top:48px;right:38px;width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#FFF6E0,#F4D3B5);
+  box-shadow:0 0 60px 16px rgba(255,246,224,.35);
+}
+/* Distant hills */
+.world-bg .hill-far{
+  position:absolute;bottom:30%;left:0;right:0;height:120px;
+  background:linear-gradient(180deg,#4A3A6A 0%,#3D2E58 100%);
+  clip-path:polygon(0 60%,8% 40%,18% 50%,28% 30%,40% 45%,52% 25%,64% 40%,76% 30%,88% 45%,100% 35%,100% 100%,0 100%);
+}
+.world-bg .hill-near{
+  position:absolute;bottom:18%;left:0;right:0;height:140px;
+  background:linear-gradient(180deg,#3D2E58 0%,#2A1F40 100%);
+  clip-path:polygon(0 70%,12% 50%,24% 60%,36% 40%,48% 55%,60% 35%,72% 50%,84% 40%,96% 55%,100% 50%,100% 100%,0 100%);
+}
+/* Ground */
+.world-bg .ground{
+  position:absolute;bottom:0;left:0;right:0;height:18%;
+  background:linear-gradient(180deg,#2A1F40 0%,#1a1428 100%);
+}
+/* Lanterns floating */
+.lantern{
+  position:absolute;width:14px;height:18px;border-radius:50% 50% 40% 40%;
+  background:radial-gradient(circle at 50% 40%,#FFE4A0,#F4B86A);
+  box-shadow:0 0 18px 4px rgba(244,184,106,.55);
+  animation:lantern-bob 6s ease-in-out infinite;
+  z-index:3;
+}
+@keyframes lantern-bob{
+  0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}
+}
+/* Fireflies */
+.firefly{
+  position:absolute;width:5px;height:5px;border-radius:50%;
+  background:#F4D3B5;box-shadow:0 0 12px 3px rgba(244,211,181,.7);
+  animation:firefly 8s var(--ease) infinite;z-index:3;opacity:.85;
+}
+@keyframes firefly{
+  0%,100%{transform:translate(0,0);opacity:.6;}
+  25%{transform:translate(20px,-30px);opacity:1;}
+  50%{transform:translate(-15px,-60px);opacity:.7;}
+  75%{transform:translate(25px,-40px);opacity:1;}
+}
+
+/* ============================================================
+   World UI overlay
+   ============================================================ */
+.world-top{
+  position:absolute;top:54px;left:14px;right:14px;z-index:40;
+  display:flex;align-items:center;gap:8px;pointer-events:none;
+}
+.world-top > *{pointer-events:auto;}
+.world-pill{
+  background:rgba(0,0,0,.42);backdrop-filter:blur(14px);
+  border-radius:999px;padding:8px 14px;display:flex;align-items:center;gap:8px;
+  color:#fff;font-size:12px;font-weight:700;
+}
+.dot-live{
+  width:7px;height:7px;border-radius:50%;background:#7CD9A0;
+  box-shadow:0 0 10px 2px rgba(124,217,160,.6);
+  animation:pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{transform:scale(1);opacity:1;}
+  50%{transform:scale(1.4);opacity:.6;}
+}
+.world-tooltip{
+  position:absolute;top:96px;left:50%;transform:translateX(-50%);z-index:25;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(14px);
+  padding:6px 14px;border-radius:999px;color:#fff;font-size:11px;font-weight:600;
+  letter-spacing:.04em;pointer-events:none;
+  animation:tooltip-fade 6s ease-in-out forwards;
+}
+@keyframes tooltip-fade{
+  0%,70%{opacity:1;}100%{opacity:0;}
+}
+
+/* ============================================================
+   Avatar (in world)
+   ============================================================ */
+.canvas{position:absolute;inset:0;z-index:5;cursor:crosshair;}
+.avatar{
+  position:absolute;width:68px;height:68px;
+  transform:translate(-50%,-100%);
+  transition:left 1.1s var(--ease), top 1.1s var(--ease);
+  z-index:10;
+  cursor:pointer;
+}
+.avatar.user{z-index:11;}
+.avatar svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3));}
+.avatar .name-tag{
+  position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
+  background:rgba(255,255,255,.95);backdrop-filter:blur(8px);
+  padding:2px 8px;border-radius:999px;
+  font-size:10px;font-weight:800;color:var(--cocoa);
+  white-space:nowrap;
+  box-shadow:0 4px 10px -3px rgba(0,0,0,.4);
+}
+.avatar.user .name-tag{
+  background:linear-gradient(135deg,var(--peach),var(--peach-deep));
+  color:#fff;
+}
+.avatar .footprint{
+  position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
+  width:36px;height:8px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,0,0,.35),rgba(0,0,0,0));
+  z-index:-1;
+}
+.avatar.walking{animation:avatar-walk .55s ease-in-out infinite;}
+@keyframes avatar-walk{
+  0%,100%{transform:translate(-50%,-100%) translateY(0);}
+  50%{transform:translate(-50%,-100%) translateY(-4px);}
+}
+/* Thought bubble above avatar */
+.bubble{
+  position:absolute;top:-6px;left:50%;
+  transform:translate(-50%,-100%);
+  background:rgba(255,255,255,.96);backdrop-filter:blur(8px);
+  padding:8px 12px;border-radius:18px 18px 18px 6px;
+  font-size:11px;color:var(--cocoa);font-weight:600;
+  max-width:180px;line-height:1.4;
+  box-shadow:0 8px 22px -8px rgba(0,0,0,.5);
+  pointer-events:none;
+  animation:bubble-bob 5s ease-in-out infinite;
+  z-index:12;
+}
+.bubble .mood{
+  display:inline-block;font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--peach-deep);font-weight:800;margin-bottom:3px;
+}
+.bubble::before{content:'';position:absolute;bottom:-6px;left:14px;width:10px;height:10px;background:rgba(255,255,255,.96);border-radius:50%;}
+.bubble::after{content:'';position:absolute;bottom:-14px;left:8px;width:6px;height:6px;background:rgba(255,255,255,.96);border-radius:50%;}
+@keyframes bubble-bob{
+  0%,100%{transform:translate(-50%,-100%) translateY(0);}
+  50%{transform:translate(-50%,-100%) translateY(-4px);}
+}
+
+/* "Tap me" hint */
+.avatar.has-hint::after{
+  content:'tap to read ✿';
+  position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#F0C8C0,#E9A488);color:#fff;
+  font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;white-space:nowrap;
+  animation:hint-bob 1.6s ease-in-out infinite;
+  pointer-events:none;
+  box-shadow:0 4px 10px -3px rgba(233,164,136,.5);
+}
+@keyframes hint-bob{
+  0%,100%{transform:translateX(-50%) translateY(0);opacity:.95;}
+  50%{transform:translateX(-50%) translateY(-3px);opacity:1;}
+}
+
+/* Hug embrace heart over avatar */
+.embrace-heart{
+  position:absolute;top:-30px;left:50%;transform:translate(-50%,-100%);
+  z-index:20;font-size:32px;color:#E9A488;pointer-events:none;
+  filter:drop-shadow(0 4px 10px rgba(233,164,136,.7));
+  animation:embrace-heart 2200ms var(--ease) forwards;
+}
+@keyframes embrace-heart{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(0.4) rotate(-12deg);}
+  20%{opacity:1;transform:translate(-50%,-110%) scale(1.4) rotate(0);}
+  60%{opacity:1;transform:translate(-50%,-130%) scale(1.1) rotate(4deg);}
+  100%{opacity:0;transform:translate(-50%,-180%) scale(0.9) rotate(-3deg);}
+}
+
+/* Flying hearts trail */
+.heart-trail{
+  position:absolute;z-index:50;font-size:18px;pointer-events:none;
+  color:#E9A488;filter:drop-shadow(0 2px 6px rgba(233,164,136,.6));
+  animation:heart-fly 1100ms var(--ease) forwards;
+}
+@keyframes heart-fly{
+  0%{transform:translate(0,0) scale(0.6);opacity:0;}
+  18%{opacity:1;transform:translate(var(--mx,-20px),var(--my,-30px)) scale(1.2);}
+  60%{opacity:1;transform:translate(calc(var(--dx) * .6),calc(var(--dy) * .6 - 30px)) scale(1.1);}
+  100%{transform:translate(var(--dx),var(--dy)) scale(0.4);opacity:0;}
+}
+
+/* Hug sparkle particles */
+.spark{
+  position:absolute;z-index:18;font-size:14px;pointer-events:none;
+  animation:spark 1400ms var(--ease) forwards;
+}
+@keyframes spark{
+  0%{opacity:0;transform:translate(0,0) scale(0.5);}
+  20%{opacity:1;}
+  100%{opacity:0;transform:translate(var(--dx,0),-60px) scale(1);}
+}
+
+/* Target click marker */
+.target-marker{
+  position:absolute;width:24px;height:24px;
+  border-radius:50%;border:2px solid #fff;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  animation:target-pulse 1.4s var(--ease) forwards;
+}
+@keyframes target-pulse{
+  0%{transform:translate(-50%,-50%) scale(0.4);opacity:1;}
+  100%{transform:translate(-50%,-50%) scale(2);opacity:0;}
+}
+
+/* ============================================================
+   NPC Popup (Club Penguin / Animal Jam)
+   ============================================================ */
+.npc-popup{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:300px;background:rgba(255,255,255,.98);backdrop-filter:blur(20px);
+  border-radius:24px;padding:18px;z-index:80;
+  box-shadow:0 30px 60px -10px rgba(0,0,0,.5);
+  display:none;
+}
+.npc-popup.show{display:block;animation:popup-in 320ms var(--ease);}
+@keyframes popup-in{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(0.85);}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+}
+.npc-popup .head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.npc-popup .head .av{
+  width:48px;height:48px;border-radius:50%;background:var(--blush);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;
+}
+.npc-popup .head .av svg{width:60px;height:60px;}
+.npc-popup .head .meta h4{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+.npc-popup .head .meta small{font-size:10px;font-weight:700;color:var(--peach-deep);
+  letter-spacing:.06em;text-transform:uppercase;}
+.npc-popup .head .x{
+  margin-left:auto;width:30px;height:30px;border-radius:50%;
+  background:#F0E8DC;color:var(--cocoa);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.npc-popup .head .x svg{width:14px;height:14px;}
+.npc-popup .body{
+  padding:14px;background:#FBF4EC;border-radius:16px;
+  font-size:13.5px;line-height:1.5;color:var(--cocoa);font-weight:500;
+  margin-bottom:12px;font-family:'Fraunces',serif;font-style:italic;
+}
+.npc-popup .actions{display:flex;gap:8px;}
+.npc-popup .actions .btn{
+  flex:1;border:none;cursor:pointer;font-weight:800;font-size:13px;
+  padding:11px 14px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:transform 180ms var(--ease);
+}
+.npc-popup .actions .btn:hover{transform:scale(1.02);}
+.npc-popup .actions .btn:active{transform:scale(0.96);}
+.npc-popup .actions .btn-back{background:#F0E8DC;color:var(--cocoa);}
+.npc-popup .actions .btn-hug{
+  background:linear-gradient(135deg,#F0C8C0,#E9A488);color:#fff;
+  box-shadow:0 6px 14px -3px rgba(233,164,136,.5);
+}
+.npc-popup .actions .btn-hug svg{width:14px;height:14px;}
+
+/* ============================================================
+   Bottom feed strip (one-tap "like → hug")
+   ============================================================ */
+.feed-strip{
+  position:absolute;left:0;right:0;bottom:96px;z-index:32;
+  padding:12px 14px 14px;
+  display:flex;gap:10px;overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  background:linear-gradient(to top,rgba(20,12,30,.7) 30%,rgba(20,12,30,0));
+}
+.feed-strip::-webkit-scrollbar{display:none;}
+.feed-strip-label{
+  position:absolute;top:-10px;left:18px;
+  font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.85);
+  background:rgba(0,0,0,.5);backdrop-filter:blur(8px);
+  padding:4px 10px;border-radius:999px;z-index:2;
+}
+.feed-card{
+  flex:0 0 auto;width:200px;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+  border-radius:18px;padding:10px 12px 12px;
+  box-shadow:0 12px 24px -10px rgba(0,0,0,.5);
+  scroll-snap-align:start;
+  display:flex;flex-direction:column;gap:6px;
+  position:relative;
+}
+.feed-card .fc-head{display:flex;align-items:center;gap:8px;}
+.feed-card .fc-av{
+  width:32px;height:32px;border-radius:50%;background:var(--blush);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;
+}
+.feed-card .fc-av svg{width:38px;height:38px;}
+.feed-card .fc-name{font-size:11.5px;font-weight:800;color:var(--cocoa);line-height:1;}
+.feed-card .fc-mood{font-size:9px;font-weight:700;color:var(--peach-deep);
+  letter-spacing:.06em;text-transform:uppercase;margin-top:3px;}
+.feed-card .fc-text{
+  font-size:11.5px;line-height:1.4;color:#3D2E22;font-weight:500;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.feed-card .fc-actions{display:flex;gap:6px;margin-top:2px;}
+.feed-card .like-btn{
+  flex:1;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#F0C8C0,#E9A488);color:#fff;
+  font-size:11px;font-weight:800;
+  padding:8px 10px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  transition:transform 180ms var(--ease);
+  box-shadow:0 4px 12px -3px rgba(233,164,136,.5);
+}
+.feed-card .like-btn:hover{transform:scale(1.04);}
+.feed-card .like-btn:active{transform:scale(0.96);}
+.feed-card .like-btn.sent{
+  background:linear-gradient(135deg,#B8D4C0,#7B9F86);
+  pointer-events:none;
+}
+.feed-card .like-btn svg{width:11px;height:11px;}
+.feed-card .visit-btn{
+  border:none;cursor:pointer;
+  background:rgba(200,192,224,.5);color:var(--cocoa);
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform 180ms var(--ease);
+}
+.feed-card .visit-btn:hover{transform:scale(1.08);}
+.feed-card .visit-btn svg{width:13px;height:13px;}
+
+/* ============================================================
+   Big floating Hug FAB
+   ============================================================ */
+.fab-hug{
+  position:absolute;right:18px;bottom:200px;z-index:35;
+  width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#F0C8C0 0%,#E9A488 100%);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 14px 30px -8px rgba(233,164,136,.7), inset 0 1px 0 rgba(255,255,255,.4);
+  transition:transform 220ms var(--ease);
+  animation:fab-breathe 3.4s ease-in-out infinite;
+}
+.fab-hug:hover{transform:scale(1.08) rotate(-4deg);}
+.fab-hug:active{transform:scale(0.94);}
+.fab-hug svg{width:30px;height:30px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
+.fab-hug::after{
+  content:'hug';position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:800;color:#fff;letter-spacing:.08em;text-transform:uppercase;
+  text-shadow:0 1px 4px rgba(0,0,0,.7);
+}
+.fab-hug::before{
+  content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:2px solid rgba(240,200,192,.6);
+  animation:fab-pulse 2.4s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes fab-breathe{
+  0%,100%{box-shadow:0 14px 30px -8px rgba(233,164,136,.7), inset 0 1px 0 rgba(255,255,255,.4);}
+  50%{box-shadow:0 18px 38px -6px rgba(233,164,136,.9), inset 0 1px 0 rgba(255,255,255,.5);}
+}
+@keyframes fab-pulse{
+  0%{transform:scale(1);opacity:.8;}
+  100%{transform:scale(1.6);opacity:0;}
+}
+
+/* Hug toast */
+.hug-toast{
+  position:absolute;left:50%;top:130px;transform:translateX(-50%);
+  z-index:60;background:rgba(255,255,255,.96);
+  padding:8px 16px;border-radius:999px;font-size:12px;font-weight:700;color:var(--cocoa);
+  box-shadow:0 10px 22px -6px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:6px;
+  animation:hug-toast 2400ms var(--ease) forwards;
+  pointer-events:none;
+}
+.hug-toast svg{width:14px;height:14px;color:#E9A488;}
+@keyframes hug-toast{
+  0%{opacity:0;transform:translate(-50%,10px);}
+  15%{opacity:1;transform:translate(-50%,0);}
+  85%{opacity:1;transform:translate(-50%,0);}
+  100%{opacity:0;transform:translate(-50%,-10px);}
+}
+
+/* Hugs received bigger animation */
+.hug-received{
+  position:absolute;top:-22px;left:50%;transform:translate(-50%,-100%);
+  z-index:18;pointer-events:none;
+  background:linear-gradient(135deg,#F0C8C0,#E9A488);
+  color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;
+  box-shadow:0 6px 14px -4px rgba(233,164,136,.7);
+  animation:hug-received 2000ms var(--ease) forwards;
+  white-space:nowrap;
+}
+@keyframes hug-received{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(0.6);}
+  20%{opacity:1;transform:translate(-50%,-100%) scale(1.1);}
+  70%{opacity:1;transform:translate(-50%,-130%) scale(1);}
+  100%{opacity:0;transform:translate(-50%,-180%) scale(0.9);}
+}
+
+/* Group cuddle banner */
+.group-banner{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:70;
+  background:linear-gradient(135deg,#F0C8C0,#E9A488);
+  color:#fff;padding:14px 28px;border-radius:999px;
+  font-family:'Fraunces',serif;font-size:18px;font-weight:600;
+  box-shadow:0 14px 30px -8px rgba(233,164,136,.8);
+  opacity:0;pointer-events:none;
+  animation:group-banner 3000ms var(--ease) forwards;
+}
+@keyframes group-banner{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(0.6);}
+  15%{opacity:1;transform:translate(-50%,-50%) scale(1.1);}
+  30%,70%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(0.9);}
+}
+
+/* Side intro panel (left of phone) */
+.side{
+  position:absolute;left:-340px;top:0;width:300px;
+  background:rgba(255,255,255,.85);backdrop-filter:blur(20px);
+  padding:24px;border-radius:28px;
+  box-shadow:0 20px 50px -10px rgba(0,0,0,.15);
+}
+.side .tag{
+  display:inline-block;background:var(--blush);color:var(--peach-deep);
+  padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;
+}
+.side h1{font-family:'Fraunces',serif;font-size:26px;font-weight:600;line-height:1.15;margin-bottom:10px;}
+.side p{font-size:13px;line-height:1.55;color:#5C4030;opacity:.85;margin-bottom:16px;}
+.side .legend{display:flex;flex-direction:column;gap:8px;}
+.side .legend .item{
+  display:flex;align-items:center;gap:8px;font-size:12px;color:var(--cocoa);font-weight:600;
+}
+.side .legend .dot{
+  width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(135deg,#F0C8C0,#E9A488);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:11px;flex-shrink:0;
+}
+@media (max-width:880px){
+  body{flex-direction:column;align-items:center;padding:14px;}
+  .side{position:relative;left:0;width:100%;max-width:390px;margin-bottom:14px;}
+}
+</style>
+</head>
+<body>
+
+<div class="phone-stage">
+  <div class="side">
+    <span class="tag">QuokkaPokka · Live</span>
+    <h1 class="serif">Lantern Meadow</h1>
+    <p>An anonymous 2D world. Tap any avatar to read what they're feeling. Tap the pink hug button to wrap them in a warm embrace. Tap the canvas to walk.</p>
+    <div class="legend">
+      <div class="item"><span class="dot">♥</span> like → animated hug</div>
+      <div class="item"><span class="dot">✿</span> tap any animal → read their thought</div>
+      <div class="item"><span class="dot">→</span> tap floor → walk there</div>
+    </div>
+  </div>
+
+  <div class="phone-frame">
+    <div class="notch"></div>
+
+    <div class="world">
+      <!-- Background scene -->
+      <div class="world-bg">
+        <div class="moon"></div>
+        <div class="hill-far"></div>
+        <div class="hill-near"></div>
+        <div class="ground"></div>
+      </div>
+
+      <!-- Top status -->
+      <div class="world-top">
+        <div class="world-pill"><span class="dot-live"></span> Lantern Meadow · <b id="online-count">28</b> here</div>
+      </div>
+
+      <div class="world-tooltip">tap floor to walk · tap a friend to read · tap ♥ to hug</div>
+
+      <!-- Avatar canvas -->
+      <div class="canvas" id="canvas"></div>
+
+      <!-- NPC popup -->
+      <div class="npc-popup" id="npc-popup">
+        <div class="head">
+          <div class="av" id="popup-av"></div>
+          <div class="meta">
+            <h4 id="popup-name">wisp</h4>
+            <small id="popup-mood">calm · sharing now</small>
+          </div>
+          <div class="x" onclick="closePopup()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6l-6 12"/></svg>
+          </div>
+        </div>
+        <div class="body">"<span id="popup-text">Small wins today.</span>"</div>
+        <div class="actions">
+          <button class="btn btn-back" onclick="closePopup()">Hold space</button>
+          <button class="btn btn-hug" onclick="hugFromPopup()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10z"/></svg>
+            send a hug
+          </button>
+        </div>
+      </div>
+
+      <!-- Floating hug FAB -->
+      <button class="fab-hug" id="fab-hug" onclick="quickHug()" aria-label="Hug nearest">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10z"/></svg>
+      </button>
+
+      <!-- Bottom feed strip -->
+      <div class="feed-strip" id="feed-strip">
+        <span class="feed-strip-label">nearby thoughts ✿</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Avatar SVG templates -->
+<template id="tpl-fox">
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="100" cy="170" rx="46" ry="20" fill="rgba(0,0,0,.0)"/>
+  <ellipse cx="100" cy="135" rx="48" ry="42" fill="var(--fur)"/>
+  <ellipse cx="100" cy="148" rx="32" ry="28" fill="var(--belly)"/>
+  <ellipse cx="100" cy="92" rx="40" ry="38" fill="var(--fur)"/>
+  <polygon points="68,68 56,30 86,58" fill="var(--fur)"/>
+  <polygon points="76,60 68,42 84,54" fill="var(--belly)"/>
+  <polygon points="132,68 144,30 114,58" fill="var(--fur)"/>
+  <polygon points="124,60 132,42 116,54" fill="var(--belly)"/>
+  <ellipse cx="100" cy="110" rx="22" ry="18" fill="var(--belly)"/>
+  <ellipse cx="84" cy="92" rx="3.5" ry="4.5" fill="#3D3329"/>
+  <ellipse cx="116" cy="92" rx="3.5" ry="4.5" fill="#3D3329"/>
+  <ellipse cx="84" cy="90" rx="1" ry="1.4" fill="#fff"/>
+  <ellipse cx="116" cy="90" rx="1" ry="1.4" fill="#fff"/>
+  <ellipse cx="100" cy="108" rx="3" ry="2.2" fill="#3D3329"/>
+  <path d="M 92 116 Q 100 122 108 116" stroke="#3D3329" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <ellipse cx="74" cy="106" rx="5" ry="3" fill="#F0C8C0" opacity=".7"/>
+  <ellipse cx="126" cy="106" rx="5" ry="3" fill="#F0C8C0" opacity=".7"/>
+  <ellipse cx="80" cy="172" rx="10" ry="6" fill="var(--fur)"/>
+  <ellipse cx="120" cy="172" rx="10" ry="6" fill="var(--fur)"/>
+</svg>
+</template>
+
+<template id="tpl-bunny">
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="76" cy="46" rx="11" ry="32" fill="var(--fur)"/>
+  <ellipse cx="76" cy="50" rx="6" ry="22" fill="#F0C8C0" opacity=".7"/>
+  <ellipse cx="124" cy="46" rx="11" ry="32" fill="var(--fur)"/>
+  <ellipse cx="124" cy="50" rx="6" ry="22" fill="#F0C8C0" opacity=".7"/>
+  <ellipse cx="100" cy="135" rx="48" ry="42" fill="var(--fur)"/>
+  <ellipse cx="100" cy="148" rx="32" ry="28" fill="var(--belly)"/>
+  <ellipse cx="100" cy="100" rx="40" ry="36" fill="var(--fur)"/>
+  <ellipse cx="100" cy="118" rx="20" ry="14" fill="var(--belly)"/>
+  <ellipse cx="86" cy="98" rx="3.5" ry="4.5" fill="#3D3329"/>
+  <ellipse cx="114" cy="98" rx="3.5" ry="4.5" fill="#3D3329"/>
+  <ellipse cx="86" cy="96" rx="1" ry="1.4" fill="#fff"/>
+  <ellipse cx="114" cy="96" rx="1" ry="1.4" fill="#fff"/>
+  <ellipse cx="100" cy="116" rx="3" ry="2.2" fill="#F0C8C0"/>
+  <path d="M 96 120 L 100 124 L 104 120" stroke="#3D3329" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="78" cy="114" rx="5" ry="3" fill="#F0C8C0" opacity=".7"/>
+  <ellipse cx="122" cy="114" rx="5" ry="3" fill="#F0C8C0" opacity=".7"/>
+  <ellipse cx="80" cy="172" rx="11" ry="7" fill="var(--fur)"/>
+  <ellipse cx="120" cy="172" rx="11" ry="7" fill="var(--fur)"/>
+</svg>
+</template>
+
+<template id="tpl-cat">
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="100" cy="135" rx="48" ry="42" fill="var(--fur)"/>
+  <ellipse cx="100" cy="148" rx="32" ry="28" fill="var(--belly)"/>
+  <ellipse cx="100" cy="96" rx="40" ry="36" fill="var(--fur)"/>
+  <polygon points="64,72 70,42 90,64" fill="var(--fur)"/>
+  <polygon points="74,64 76,52 84,60" fill="#F0C8C0"/>
+  <polygon points="136,72 130,42 110,64" fill="var(--fur)"/>
+  <polygon points="126,64 124,52 116,60" fill="#F0C8C0"/>
+  <ellipse cx="100" cy="112" rx="20" ry="14" fill="var(--belly)"/>
+  <ellipse cx="84" cy="94" rx="4" ry="5.5" fill="#3D3329"/>
+  <ellipse cx="116" cy="94" rx="4" ry="5.5" fill="#3D3329"/>
+  <ellipse cx="84" cy="91" rx="1.2" ry="1.6" fill="#fff"/>
+  <ellipse cx="116" cy="91" rx="1.2" ry="1.6" fill="#fff"/>
+  <ellipse cx="100" cy="110" rx="2.4" ry="2" fill="#F0C8C0"/>
+  <path d="M 96 114 Q 100 118 104 114" stroke="#3D3329" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <line x1="76" y1="108" x2="64" y2="106" stroke="#3D3329" stroke-width="0.9"/>
+  <line x1="76" y1="112" x2="64" y2="114" stroke="#3D3329" stroke-width="0.9"/>
+  <line x1="124" y1="108" x2="136" y2="106" stroke="#3D3329" stroke-width="0.9"/>
+  <line x1="124" y1="112" x2="136" y2="114" stroke="#3D3329" stroke-width="0.9"/>
+  <ellipse cx="80" cy="172" rx="10" ry="6" fill="var(--fur)"/>
+  <ellipse cx="120" cy="172" rx="10" ry="6" fill="var(--fur)"/>
+</svg>
+</template>
+
+<template id="tpl-capybara">
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="100" cy="138" rx="54" ry="44" fill="var(--fur)"/>
+  <ellipse cx="100" cy="150" rx="36" ry="30" fill="var(--belly)"/>
+  <ellipse cx="100" cy="92" rx="42" ry="36" fill="var(--fur)"/>
+  <ellipse cx="72" cy="76" rx="6" ry="6" fill="var(--fur)"/>
+  <ellipse cx="128" cy="76" rx="6" ry="6" fill="var(--fur)"/>
+  <ellipse cx="100" cy="108" rx="22" ry="12" fill="var(--belly)"/>
+  <ellipse cx="86" cy="92" rx="3" ry="4" fill="#3D3329"/>
+  <ellipse cx="114" cy="92" rx="3" ry="4" fill="#3D3329"/>
+  <ellipse cx="94" cy="108" rx="1.4" ry="1" fill="#3D3329"/>
+  <ellipse cx="106" cy="108" rx="1.4" ry="1" fill="#3D3329"/>
+  <path d="M 92 116 Q 100 122 108 116" stroke="#3D3329" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <ellipse cx="76" cy="106" rx="5" ry="3" fill="#F0C8C0" opacity=".6"/>
+  <ellipse cx="124" cy="106" rx="5" ry="3" fill="#F0C8C0" opacity=".6"/>
+  <ellipse cx="78" cy="174" rx="12" ry="7" fill="var(--fur)"/>
+  <ellipse cx="122" cy="174" rx="12" ry="7" fill="var(--fur)"/>
+</svg>
+</template>
+
+<script>
+/* ============================================================
+   COLOR PRESETS
+   ============================================================ */
+const COLOR_MAP = {
+  peach:    { fur:'#E9B488', belly:'#F4D3B5' },
+  cream:    { fur:'#F0DCB8', belly:'#F8E8D0' },
+  lavender: { fur:'#C8C0E0', belly:'#E0D8F0' },
+  sage:     { fur:'#B8D4C0', belly:'#D4E5DA' },
+  slate:    { fur:'#A8B5C8', belly:'#C8D4E0' },
+  cocoa:    { fur:'#A6764A', belly:'#D49873' },
+};
+
+/* ============================================================
+   AVATAR FACTORY
+   ============================================================ */
+function buildAvatar(species, color){
+  const tpl = document.getElementById('tpl-' + species);
+  const node = tpl.content.cloneNode(true);
+  const svg = node.querySelector('svg');
+  const c = COLOR_MAP[color];
+  svg.style.setProperty('--fur', c.fur);
+  svg.style.setProperty('--belly', c.belly);
+  return svg;
+}
+
+/* ============================================================
+   YOUR AVATAR + NPCs (each customized)
+   ============================================================ */
+const YOU = { species:'fox', color:'peach', name:'you' };
+
+const NPCS = [
+  { species:'bunny',    color:'cream',    name:'wisp',   mood:'calm',         text:'Small wins today: I made tea before checking my phone.', x:0.20, y:0.62 },
+  { species:'cat',      color:'slate',    name:'echo',   mood:'gloomy',       text:"Today felt long. I'm still here, though.",              x:0.74, y:0.55 },
+  { species:'capybara', color:'cocoa',    name:'pebble', mood:'blissful',     text:'A stranger held the door for me. It was enough.',        x:0.32, y:0.78 },
+  { species:'fox',      color:'lavender', name:'juno',   mood:'disappointed', text:'Maybe tomorrow is softer than today.',                   x:0.84, y:0.74 },
+  { species:'bunny',    color:'sage',     name:'fern',   mood:'annoyed',      text:"It's okay to need quiet. I am taking it gently.",        x:0.50, y:0.46 },
+  { species:'fox',      color:'cocoa',    name:'ember',  mood:'blissful',     text:'I danced in the kitchen tonight. Just because.',         x:0.62, y:0.70 },
+  { species:'cat',      color:'cream',    name:'moss',   mood:'calm',         text:'Sunlight on the floor felt like a small hug today.',     x:0.22, y:0.48 },
+  { species:'capybara', color:'sage',     name:'willow', mood:'blissful',     text:'I let myself rest without earning it. New for me.',      x:0.78, y:0.40 },
+];
+
+let userPos = { x:0.5, y:0.68 };
+let activeNpc = null;
+
+/* ============================================================
+   RENDER WORLD
+   ============================================================ */
+function renderWorld(){
+  const canvas = document.getElementById('canvas');
+  const bg = document.querySelector('.world-bg');
+
+  // Stars
+  for (let i = 0; i < 18; i++){
+    const s = document.createElement('div');
+    s.className = 'star' + (Math.random() > 0.7 ? ' bright' : '');
+    s.style.top = (4 + Math.random() * 30) + '%';
+    s.style.left = (Math.random() * 100) + '%';
+    s.style.animationDelay = (Math.random() * 3) + 's';
+    bg.appendChild(s);
+  }
+  // Lanterns
+  const lanternPositions = [
+    {top:'18%',left:'12%'},{top:'24%',right:'18%'},{top:'34%',left:'22%'},
+    {top:'40%',right:'14%'},{top:'48%',left:'10%'},{top:'30%',left:'48%'},
+    {top:'42%',left:'62%'},
+  ];
+  lanternPositions.forEach((p, i) => {
+    const l = document.createElement('div');
+    l.className = 'lantern';
+    Object.assign(l.style, p);
+    l.style.animationDelay = (i * 0.8) + 's';
+    bg.appendChild(l);
+  });
+  // Fireflies
+  for (let i = 0; i < 12; i++){
+    const f = document.createElement('div');
+    f.className = 'firefly';
+    f.style.top = (20 + Math.random() * 50) + '%';
+    f.style.left = (Math.random() * 95) + '%';
+    f.style.animationDelay = (Math.random() * -8) + 's';
+    f.style.animationDuration = (6 + Math.random() * 4) + 's';
+    bg.appendChild(f);
+  }
+
+  // User avatar
+  const userEl = document.createElement('div');
+  userEl.className = 'avatar user';
+  userEl.id = 'user-avatar';
+  userEl.style.left = (userPos.x * 100) + '%';
+  userEl.style.top  = (userPos.y * 100) + '%';
+  userEl.appendChild(buildAvatar(YOU.species, YOU.color));
+  const fp1 = document.createElement('div'); fp1.className = 'footprint'; userEl.appendChild(fp1);
+  const tag1 = document.createElement('div'); tag1.className = 'name-tag'; tag1.textContent = YOU.name; userEl.appendChild(tag1);
+  canvas.appendChild(userEl);
+
+  // NPCs
+  NPCS.forEach((npc, i) => {
+    const el = document.createElement('div');
+    el.className = 'avatar npc';
+    if (i === 0) el.classList.add('has-hint');
+    el.dataset.idx = i;
+    el.style.left = (npc.x * 100) + '%';
+    el.style.top  = (npc.y * 100) + '%';
+    el.appendChild(buildAvatar(npc.species, npc.color));
+    const fp = document.createElement('div'); fp.className = 'footprint'; el.appendChild(fp);
+    const tag = document.createElement('div'); tag.className = 'name-tag'; tag.textContent = npc.name; el.appendChild(tag);
+    const bub = document.createElement('div');
+    bub.className = 'bubble';
+    bub.style.animationDelay = (i * 0.7) + 's';
+    bub.innerHTML = `<span class="mood">${npc.mood}</span><br>${npc.text}`;
+    el.appendChild(bub);
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      el.classList.remove('has-hint');
+      openPopup(el, npc);
+    });
+    canvas.appendChild(el);
+  });
+
+  // Hide hint after 8s
+  setTimeout(() => document.querySelectorAll('.has-hint').forEach(el => el.classList.remove('has-hint')), 8000);
+
+  // Click anywhere on canvas to walk
+  canvas.addEventListener('click', (e) => {
+    if (e.target.closest('.avatar') || e.target.closest('.npc-popup')) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top)  / rect.height;
+    walkUserTo(x, y);
+    const m = document.createElement('div');
+    m.className = 'target-marker';
+    m.style.left = (x * 100) + '%';
+    m.style.top  = (y * 100) + '%';
+    canvas.appendChild(m);
+    setTimeout(() => m.remove(), 1400);
+  });
+
+  // Wander every 4.5s
+  setInterval(wanderNpcs, 4500);
+
+  // Build feed strip
+  buildFeedStrip();
+  // Live online count jitter
+  setInterval(() => {
+    const el = document.getElementById('online-count');
+    if (el) el.textContent = 26 + Math.floor(Math.random() * 6);
+  }, 3800);
+}
+
+function walkUserTo(x, y){
+  x = Math.max(0.08, Math.min(0.92, x));
+  y = Math.max(0.30, Math.min(0.86, y));
+  const u = document.getElementById('user-avatar');
+  u.classList.add('walking');
+  if (x < userPos.x) u.style.transform = 'translate(-50%,-100%) scaleX(-1)';
+  else               u.style.transform = 'translate(-50%,-100%) scaleX(1)';
+  u.style.left = (x * 100) + '%';
+  u.style.top  = (y * 100) + '%';
+  userPos = { x, y };
+  setTimeout(() => u.classList.remove('walking'), 1200);
+}
+
+function wanderNpcs(){
+  document.querySelectorAll('.avatar.npc').forEach(el => {
+    const idx = +el.dataset.idx;
+    const npc = NPCS[idx];
+    const dx = (Math.random() - 0.5) * 0.16;
+    const dy = (Math.random() - 0.5) * 0.10;
+    const nx = Math.max(0.08, Math.min(0.92, npc.x + dx));
+    const ny = Math.max(0.30, Math.min(0.86, npc.y + dy));
+    el.classList.add('walking');
+    if (nx < npc.x) el.style.transform = 'translate(-50%,-100%) scaleX(-1)';
+    else            el.style.transform = 'translate(-50%,-100%) scaleX(1)';
+    el.style.left = (nx * 100) + '%';
+    el.style.top  = (ny * 100) + '%';
+    npc.x = nx; npc.y = ny;
+    setTimeout(() => el.classList.remove('walking'), 1200);
+  });
+}
+
+/* ============================================================
+   POPUP
+   ============================================================ */
+function openPopup(el, npc){
+  activeNpc = { el, npc };
+  const av = document.getElementById('popup-av');
+  av.innerHTML = '';
+  av.appendChild(buildAvatar(npc.species, npc.color));
+  document.getElementById('popup-name').textContent = npc.name;
+  document.getElementById('popup-mood').textContent = `${npc.mood} · sharing now`;
+  document.getElementById('popup-text').textContent = npc.text;
+  document.getElementById('npc-popup').classList.add('show');
+}
+function closePopup(){
+  document.getElementById('npc-popup').classList.remove('show');
+  activeNpc = null;
+}
+function hugFromPopup(){
+  if (!activeNpc) return;
+  const { el, npc } = activeNpc;
+  closePopup();
+  setTimeout(() => doHug(el, npc), 220);
+}
+
+/* ============================================================
+   HUG MECHANICS
+   ============================================================ */
+function doHug(npcEl, npc){
+  const user = document.getElementById('user-avatar');
+  if (!user) return;
+  // walk toward
+  const npcX = parseFloat(npcEl.style.left) / 100;
+  const npcY = parseFloat(npcEl.style.top)  / 100;
+  const tx = npcX > userPos.x ? npcX - 0.07 : npcX + 0.07;
+  walkUserTo(tx, npcY);
+
+  setTimeout(() => {
+    spawnSparks(npcEl);
+    spawnSparks(user);
+
+    // big hearts above both
+    const h1 = document.createElement('div');
+    h1.className = 'embrace-heart';
+    h1.innerHTML = '\u2665';
+    user.appendChild(h1);
+    const h2 = document.createElement('div');
+    h2.className = 'embrace-heart';
+    h2.innerHTML = '\u2665';
+    h2.style.animationDelay = '120ms';
+    npcEl.appendChild(h2);
+    setTimeout(() => { h1.remove(); h2.remove(); }, 2200);
+
+    // lean
+    const t1 = npcEl.style.transform || 'translate(-50%,-100%)';
+    const t2 = user.style.transform || 'translate(-50%,-100%)';
+    npcEl.style.transition = 'transform 280ms var(--ease)';
+    user.style.transition  = 'transform 280ms var(--ease)';
+    if (npcX > userPos.x){
+      npcEl.style.transform = t1 + ' translateX(-8px) rotate(-8deg)';
+      user.style.transform  = t2 + ' translateX(8px) rotate(8deg)';
+    } else {
+      npcEl.style.transform = t1 + ' translateX(8px) rotate(8deg)';
+      user.style.transform  = t2 + ' translateX(-8px) rotate(-8deg)';
+    }
+    setTimeout(() => {
+      npcEl.style.transform = t1;
+      user.style.transform = t2;
+    }, 800);
+  }, 1300);
+
+  showToast(`hug sent to ${npc.name} ♥`);
+}
+
+function quickHug(){
+  // closest npc
+  let best = -1, bestDist = Infinity;
+  NPCS.forEach((n, i) => {
+    const dx = n.x - userPos.x, dy = n.y - userPos.y;
+    const d = dx*dx + dy*dy;
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
+  if (best < 0) return;
+  const el = document.querySelector(`.avatar.npc[data-idx="${best}"]`);
+  if (!el) return;
+  const fab = document.getElementById('fab-hug');
+  spawnHearts(fab, el, 5);
+  setTimeout(() => doHug(el, NPCS[best]), 380);
+}
+
+function spawnSparks(host){
+  const canvas = document.getElementById('canvas');
+  const rect = host.getBoundingClientRect();
+  const wrap = canvas.getBoundingClientRect();
+  const cx = rect.left - wrap.left + rect.width / 2;
+  const cy = rect.top  - wrap.top  + rect.height / 2;
+  const glyphs = ['\u2665','\u2728','\u2665','\u273F','\u2665'];
+  glyphs.forEach((g, i) => {
+    const s = document.createElement('span');
+    s.className = 'spark';
+    s.textContent = g;
+    s.style.color = ['#E9A488','#E9C57E','#F0C8C0','#B8D4C0','#E9A488'][i];
+    s.style.left = cx + 'px';
+    s.style.top  = (cy - 10) + 'px';
+    s.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+    s.style.animationDelay = (i * 80) + 'ms';
+    canvas.appendChild(s);
+    setTimeout(() => s.remove(), 1500);
+  });
+}
+
+function spawnHearts(fromEl, toEl, count){
+  const canvas = document.getElementById('canvas');
+  const wrap = canvas.getBoundingClientRect();
+  const f = fromEl.getBoundingClientRect();
+  const t = toEl.getBoundingClientRect();
+  const fx = f.left - wrap.left + f.width / 2;
+  const fy = f.top  - wrap.top  + f.height / 2;
+  const tx = t.left - wrap.left + t.width / 2;
+  const ty = t.top  - wrap.top  + t.height * 0.3;
+  const dx = tx - fx, dy = ty - fy;
+  for (let i = 0; i < count; i++){
+    const h = document.createElement('span');
+    h.className = 'heart-trail';
+    h.textContent = ['\u2665','\u2665','\u2728','\u2665','\u273F'][i % 5];
+    h.style.left = fx + 'px';
+    h.style.top  = fy + 'px';
+    h.style.setProperty('--dx', dx + 'px');
+    h.style.setProperty('--dy', dy + 'px');
+    h.style.setProperty('--mx', (Math.random() * 50 - 25) + 'px');
+    h.style.setProperty('--my', (-30 - Math.random() * 20) + 'px');
+    h.style.animationDelay = (i * 90) + 'ms';
+    h.style.fontSize = (16 + Math.random() * 6) + 'px';
+    canvas.appendChild(h);
+    setTimeout(() => h.remove(), 1300 + i * 100);
+  }
+}
+
+function showToast(msg){
+  const canvas = document.getElementById('canvas');
+  const t = document.createElement('div');
+  t.className = 'hug-toast';
+  t.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10z"/></svg> ${msg}`;
+  canvas.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+function showHugReceived(npcEl){
+  const b = document.createElement('div');
+  b.className = 'hug-received';
+  b.innerHTML = '\u2665 hug received';
+  npcEl.appendChild(b);
+  setTimeout(() => b.remove(), 2100);
+}
+
+/* ============================================================
+   FEED STRIP — like → animated hug
+   ============================================================ */
+function buildFeedStrip(){
+  const strip = document.getElementById('feed-strip');
+  NPCS.forEach((npc, i) => {
+    const card = document.createElement('div');
+    card.className = 'feed-card';
+    const head = document.createElement('div');
+    head.className = 'fc-head';
+    const av = document.createElement('div');
+    av.className = 'fc-av';
+    av.appendChild(buildAvatar(npc.species, npc.color));
+    head.appendChild(av);
+    const meta = document.createElement('div');
+    meta.innerHTML = `<div class="fc-name">${npc.name}</div><div class="fc-mood">${npc.mood}</div>`;
+    head.appendChild(meta);
+    const text = document.createElement('div');
+    text.className = 'fc-text';
+    text.textContent = npc.text;
+    const actions = document.createElement('div');
+    actions.className = 'fc-actions';
+    const likeBtn = document.createElement('button');
+    likeBtn.className = 'like-btn';
+    likeBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10z"/></svg> like → hug`;
+    likeBtn.onclick = (e) => {
+      e.stopPropagation();
+      const npcEl = document.querySelector(`.avatar.npc[data-idx="${i}"]`);
+      if (!npcEl) return;
+      likeBtn.classList.add('sent');
+      likeBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6L9 17l-5-5"/></svg> hugged ♥`;
+      spawnHearts(card, npcEl, 5);
+      showHugReceived(npcEl);
+      setTimeout(() => doHug(npcEl, npc), 380);
+    };
+    const visitBtn = document.createElement('button');
+    visitBtn.className = 'visit-btn';
+    visitBtn.title = 'visit';
+    visitBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+    visitBtn.onclick = (e) => {
+      e.stopPropagation();
+      const tx = npc.x > userPos.x ? npc.x - 0.07 : npc.x + 0.07;
+      walkUserTo(tx, npc.y);
+      setTimeout(() => {
+        const npcEl = document.querySelector(`.avatar.npc[data-idx="${i}"]`);
+        if (npcEl) openPopup(npcEl, npc);
+      }, 1300);
+    };
+    actions.appendChild(likeBtn);
+    actions.appendChild(visitBtn);
+    card.appendChild(head);
+    card.appendChild(text);
+    card.appendChild(actions);
+    strip.appendChild(card);
+  });
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+renderWorld();
+</script>
+</body>
+</html>
